@@ -1,3 +1,7 @@
+using StatsBase
+
+const DIRS = [:left, :up, :right, :down]
+
 function init_game()
     grid = zeros(Int8,4,4)    
     grid[rand(1:4),rand(1:4)] = rand2_1()
