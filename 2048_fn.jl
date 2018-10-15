@@ -1,9 +1,13 @@
+rand2_1() = rand() < 0.1 ? 2 : 1
+
 function init_game()
     grid = zeros(Int8,4,4)    
-    grid[rand4(),rand4()] = rand2_1()
-    grid[rand4(),rand4()] = rand2_1()
+    grid[sample(1:4),sample(1:4)] = rand2_1()
+    grid[sample(1:4),sample(1:4)] = rand2_1()
     grid
 end
+
+rand2_1() = rand() < 0.1 ? 2 : 1
 
 # a function to simulate the move and return a reward
 function move!(x, xinc, xstart, xend)
