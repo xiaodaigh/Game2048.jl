@@ -1,9 +1,7 @@
-rand2_1() = rand() < 0.1 ? 2 : 1
-
 function init_game()
     grid = zeros(Int8,4,4)    
-    grid[sample(1:4),sample(1:4)] = rand2_1()
-    grid[sample(1:4),sample(1:4)] = rand2_1()
+    grid[rand(1:4),rand(1:4)] = rand2_1()
+    grid[rand(1:4),rand(1:4)] = rand2_1()
     grid
 end
 
