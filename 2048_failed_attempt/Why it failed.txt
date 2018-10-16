@@ -1,0 +1,3 @@
+I tried to build a simple neural network with relu and sigma to predict the function. After just under 1 million runs it still failed to learn the function properly.
+
+I think the approach needs to be improved

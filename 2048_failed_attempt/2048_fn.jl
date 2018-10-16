@@ -1,10 +1,12 @@
 using StatsBase, DataFrames, JLD2, FileIO
 
-const DIRS = [:left, :up, :right, :down]
-const VALS = vcat(0,[(2).^(1:13)...])
 
-rand2_1() = rand() < 0.1 ? 2 : 1
-rand4() = Int8((rand(UInt8) % 4) + 1)
+
+const DIRS = [:left, :right, :up, :down]
+
+
+rand4() = Int64((rand(UInt64) % 4) + 1)
+rand2_4() = rand() < 0.1 ? 4 : 2
 
 if false
     # x = [rand4() for i =1:1_000_000]
@@ -21,6 +23,7 @@ if false
     xstart=4
     xend=1
 end
+
 # a function to simulate the move and return a reward
 function move!(x, xinc, xstart, xend)
     reward = 0
@@ -31,8 +34,8 @@ function move!(x, xinc, xstart, xend)
             @inbounds for k = i+xinc:xinc:xend
                 if x[k] != 0
                     if x[k] == x[i]
-                        x[i] += 1
-                        reward += 2^x[i]
+                        x[i] *= 2
+                        reward += x[i]
                         x[k] = 0
                     end
                     break;
@@ -58,8 +61,9 @@ function move_right!(x)
     move!(x, -1, 4, 1)
 end
 
+
 function move!(grid::Array{T,2}, direction) where T <: Integer
-    reward::Int16 = zero(Int16)
+    reward = 0
     if direction == :left
         for j = 1:4
             #grid[j,:] .= move_left!(grid[j,:])
@@ -114,74 +118,49 @@ function valid_moves(grid::Array{T,2}) where T
     [:left, :right, :up, :down][[left_has, right_has, up_has, down_has]]
 end
 
-function simulate_move!(grid)
-    directions = sample(DIRS, 4 , replace = false)
-    for i in 1:3
-        d1 = directions[i]
-        (grid, ok, cart, two_or_four, reward) = simulate_move!(grid, d1)
-        if ok
-           return  (grid, true, d1, cart, two_or_four, reward)
-        end
+function simulate_one!(grid)
+    vm = valid_moves(grid)
+    if length(vm) == 0
+        return (grid, false,:stopped, CartesianIndex{2}(0,0), 0, 0)
     end
-    (grid, ok, cart, two_or_four, reward) = simulate_move!(grid, directions[4])
-    (grid, ok, directions[4], cart, two_or_four, reward)
-end
-
-function simulate_move!(grid, directions::Array{Symbol,1})
-    for i in 1:3
-        d1 = directions[i]
-        (grid, ok, cart, two_or_four, reward) = simulate_move!(grid, d1)
-        if ok
-           return  (grid, true, d1, cart, two_or_four, reward)
-        end
-    end
-    (grid, ok, cart, two_or_four, reward) = simulate_move!(grid, directions[4])
-    (grid, ok, directions[4], cart, two_or_four, reward)
+    direction = rand(vm)
+    (grid, cart, two_or_four, reward) = simulate_one!(grid, direction)
+    (grid, true, direction, cart, two_or_four, reward)
 end
 
 # assume no need to check for validate moves
-function simulate_move!(grid, direction::Symbol)
-    tmp_grid = copy(grid)
+function simulate_one!(grid, direction)
     (grid, reward) = move!(grid, direction)
-    if all(tmp_grid .== grid)
-        return (grid, false, CartesianIndex{2}(-1,-1), -1, 0)
-    else
-        cart = rand(findall(grid .== 0)) # randomly choose one empty slot
-        one_or_two = rand2_1()
-        grid[cart] = one_or_two
-        return (grid, true, cart, one_or_two, reward)
-    end
+    cart = rand(findall(grid .== 0)) # randomly choose one empty slot
+    two_or_four = rand2_4()
+    grid[cart] .= two_or_four
+    (grid, cart, two_or_four, reward)
 end
 
-function simulate_game!(grid, lim)
+function simulate_game!(grid)
     init_grid = copy(grid)
     seq = Symbol[]::Array{Symbol,1}
     cartarr = CartesianIndex{2}[]
-    one_or_two_arr = Int8[]
-    reward_vec = Int16[]
+    two_or_four_arr = Int64[]
+    reward_vec = Int64[]
 
-    ok = true
+    ok = length(valid_moves(grid)) > 0
 
     while ok
-        (grid, ok1, move, cart, one_or_two, new_reward) = simulate_move!(grid)
-        ok = ok1 & all(grid .< lim)
+        (grid, ok, move, cart, two_or_four, new_reward) = simulate_one!(grid)
         push!(seq, move)
         push!(cartarr, cart)
-        push!(one_or_two_arr, one_or_two)
+        push!(two_or_four_arr, two_or_four)
         push!(reward_vec, new_reward)
     end
-    (init_grid, grid, seq, cartarr, one_or_two_arr, reward_vec)
-end
-
-function simulate_game()
-    init = init_game()
-    simulate_game!(init, Inf)
+    (init_grid, grid, seq, cartarr, two_or_four_arr, reward_vec)
 end
 
 function init_game()
-    grid = zeros(Int8,4,4)
-    grid[rand(1:4),rand(1:4)] = rand2_1()
-    grid[rand(1:4),rand(1:4)] = rand2_1()
+    grid = Array{Int64,2}(undef, 4,4)
+    grid .= 0
+    grid[rand4(),rand4()] = rand2_4()
+    grid[rand4(),rand4()] = rand2_4()
     grid
 end
 
@@ -298,15 +277,10 @@ function train_model_n(n, model, opt, ϵ)
 end
 
 function grid_move_to_feature(grid, move)
-    input = vec(Flux.onehotbatch(vec(grid),VALS))
+    input = vec(Flux.onehotbatch(vec(grid),vcat(0,[(2).^(1:13)...])))
     # create the data
     vcat(input, Flux.onehot(move, DIRS))
 end
-
-function grid_to_feature(grid)
-    vec(Flux.onehotbatch(vec(grid),VALS))
-end
-
 
 function generate_x_based_on_episode(init, seq, cart, tf)
     grid = copy(init)
@@ -339,31 +313,15 @@ function sim_iterate_one_move(grid, vm, n)
 end
 
 # replay the game from beginning to second last move
-function sim_seq!(init, seq, cart, tf)
-    for (s, c, t) in zip(seq, cart, tf)
-        move!(init, s)
-        init[c] = t
+function sim_seq(init, seq, cart, tf)
+    #display(init)
+    init_copy = copy(init)
+    for (s, c, t) in zip(@view(seq[1:end-1]), @view(cart[1:end-1]), @view(tf[1:end-1]))
+        move!(init_copy, s)
+        init_copy[c] = t
     end
-    init
+    init_copy
 end
-
-function replay_move!(agrid, move, cart, tf)
-    move!(agrid, move)
-    agrid[cart] = tf
-    agrid
-end
-
-function discounted_policy_rewards(reward_vec, λ)
-    l = length(reward_vec)
-    res = Vector{Float64}(undef, l)
-    res[end] = reward_vec[end] # the last move is always of no value
-    for l1 in l-1:-1:1
-        res[l1] = reward_vec[l1] + res[l1+1]*λ
-    end
-
-    res
-end
-
 
 function discounted_rewards(reward_vec, λ)
     l = length(reward_vec)
@@ -375,65 +333,3 @@ function discounted_rewards(reward_vec, λ)
 
     res
 end
-
-function avg_disc_reward(agrid, n, disc)
-    res = Array{Float64, 1}(undef, n)
-    for i=1:n
-      grid_copy = copy(agrid)
-      (_, _, _, _, _, reward_vec) = simulate_game!(grid_copy)
-      res[i] = discounted_rewards(reward_vec, disc)[1]
-    end
-    StatsBase.mean(res)
-end
-
-function avg_rewards_next_move(grid, move, n)
-  res = Array{Float64, 1}(undef, n)
-  for i=1:n
-    grid_copy = copy(grid)
-    simulate_one!(grid_copy, move)
-    (_, _, _, _, _, reward_vec) = simulate_game!(grid_copy)
-    res[i] = sum(reward_vec)
-  end
-  StatsBase.mean(res)
-end
-
-function avg_rewards_next_move(grid, n)
-  vm = valid_moves(grid)
-  res = avg_rewards_next_move.([grid], vm, n)
-  Dict(zip(vm, res))
-end
-
-function rotatedir(move)
-  if move == :left
-    return (:left, :down, :right, :up, :up, :left, :down, :right)
-  elseif move == :down
-    return (:down, :right, :up, :left, :right, :up, :left, :down)
-  elseif move == :right
-    return (:right, :up, :left, :down, :down, :right, :up, :left)
-  elseif move == :up
-    return (:up, :left, :down, :right, :left, :down, :right, :up)
-  else
-    return (move, move, move, move, move, move, move, move)
-  end
-end
-
-function rotations(agrid::T, move) where T
-  bgrid::T = transpose(agrid)
-    ((agrid,
-    agrid |> rotl90,
-    agrid |> rot180,
-    agrid |> rotr90,
-    bgrid,
-    bgrid |> rotl90,
-    bgrid |> rot180,
-    bgrid |> rotr90
-    ), rotatedir(move))
-    #((agrid,), (move,))
-end
-
-struct IdentitySkip
-   inner
-   activation
-end
-
-(m::IdentitySkip)(x) = m.activation.(m.inner(x) .+ x)
