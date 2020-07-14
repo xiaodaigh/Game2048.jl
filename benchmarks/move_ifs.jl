@@ -1,14 +1,14 @@
 """
-	Perform a move left
+	Perform a move left using if statements
 """
-function move!(x)
-	if x[1] == 0
+function move_ifs!(x)
+	@inbounds if x[1] == 0
 		# 0XXX
 		if x[2] == 0
 			# 00XX
 			if x[3] == 0
 				# 000A -> A000
-				x[1], x[4] = x[4], 0 
+				x[1], x[4] = x[4], 0
 			elseif x[3] == x[4]
 				# 00AA -> 2A000
 				x[1], x[3], x[4] = 1+x[3], 0 , 0

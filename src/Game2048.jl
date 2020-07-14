@@ -1,5 +1,7 @@
 module Game2048
 
-greet() = print("Hello World!")
+include("gamesim/move-up.jl")
+include("gamesim/move-board.jl")
+include("gamesim/sim-game.jl")
 
 end # module

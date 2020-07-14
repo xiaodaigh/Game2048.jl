@@ -6,3 +6,11 @@ deps/deps.jl
 *.jld2
 
 *.bson
+actor
+actor_p
+critic1
+critic1_p
+critic2
+critic2_p
+opt
+opt_pam
