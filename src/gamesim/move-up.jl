@@ -1,6 +1,6 @@
 # this is the benchmark "winner".
 # see ../benchmarks/run-benchmarks.jl
-
+export move_up!
 function move_up!(x)
     pts_scored = 0
     updated = false

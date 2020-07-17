@@ -16,10 +16,10 @@ end
 # for each step update the policy
 model = Chain(
     normalised_board -> reshape(normalised_board, 4, 4, 1, 1),
-    Conv((2,2), 1=>64, relu),
-    Conv((2,2), 64=>128, relu),
-    x->reshape(x, 2*2*128),
-    Dense(128*2*2, 4),
+    Conv((3,3), 1=>256, relu),
+    Conv((3,3), 256=>128, relu),
+    x->reshape(x, 128),
+    Dense(128, 4),
     softmax
 )
 

@@ -4,9 +4,9 @@
 using Game2048
 using Flux, Statistics, StatsBase
 using Flux: crossentropy
-using CUDA:cu
-using CUDA
-CUDA.allowscalar(false)
+# using CUDA:cu
+# using CUDA
+# CUDA.allowscalar(false)
 
 const EPSILON = 0.5
 const LAMBDA = 0.95 # the discount fcator
@@ -20,13 +20,12 @@ end
 
 actor_model = Chain(
     normalised_board -> reshape(normalised_board, 4, 4, 1, 1),
-    Conv((2,2), 1=>256, relu),
-    Conv((2,2), 256=>512, relu),
-    Conv((2,2), 512=>1024, relu),
-    x->reshape(x, 1024),
-    Dense(1024, 4),
+    Conv((3,3), 1=>512, relu),
+    Conv((3,3), 512=>256, relu),
+    x->reshape(x, 256),
+    Dense(256, 4),
     softmax
-) |> gpu
+)
 
 function loss_actor(board_float32, prob)
     crossentropy(actor_model(board_float32), prob)
@@ -38,13 +37,13 @@ critic_model1 = Chain(
     Conv((2,2), 256=>512, relu),
     Conv((2,2), 512=>1024, relu),
     x->reshape(x, 1024)
-) |> gpu
+)
 
 critic_model2 = Chain(
     Dense(1024+4, 512, relu),
     Dense(512, 256, relu),
     Dense(256, 1, exp)
-) |> gpu
+)
 
 function critic_score(board, dir)
     v1 = critic_model1(cu(Float32.(board)))

@@ -177,20 +177,25 @@ function train_one_episode() #p, opt)
     end
 end
 
-if true
+if 1 == 2
     p = Flux.params(critic_model1, critic_model2)
     opt = ADAM()
 
     pam = Flux.params(actor_model)
     opt_pam = ADAM()
-else
+elseif 2 == 3
+    using Zygote
     @load "actor"
     @load "critic1"
     @load "critic2"
     @load "actor_p"
     @load "critic1_p"
     @load "critic2_p"
+    @load "opt"
+    @load "opt_pam"
     Flux.loadparams!(actor_model, pam)
+    Flux.loadparams!(critic_model1, c1)
+    Flux.loadparams!(critic_model2, c2)
 end
 
 @time res = train_one_episode()
@@ -204,7 +209,6 @@ for i in 1:600
 
         @save "opt" opt
         @save "opt_pam" opt_pam
-
 
         @save "actor_p" pam
         c1 = Flux.params(critic_model1)

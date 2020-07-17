@@ -40,14 +40,14 @@ end
 
 function simulate_game(board = initboard(), score::Int = 0, delta=1)
     pts, update_possible =  sim_one_move!(board)
-    round = 0
+    rounds = 0
     while update_possible
-        score += pts*delta^round
+        score += pts*delta^rounds
         gen_new_tile!(board)
         pts, update_possible =  sim_one_move!(board)
-        round += 1
+        rounds += 1
     end
-    board, score
+    board, score, rounds
 end
 
 function simulate_games(n, board = initboard(), score::Int = 0)

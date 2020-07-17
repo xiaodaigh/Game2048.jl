@@ -7,7 +7,10 @@ version = "0.1.0"
 BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
-GPUArrays = "0c68f7d7-f131-5f86-a1c3-88cf8149b2d7"
+Reinforce = "0376cc21-f8a9-5fcf-8891-fde1415a4fd3"
+ReinforcementLearning = "158674fc-8238-5cab-b5ba-03dfc80d1318"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
 julia = "1"
