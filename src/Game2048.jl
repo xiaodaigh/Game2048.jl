@@ -8,5 +8,9 @@ include("gamesim/sim-game.jl")
 include("bitboard/make_lookups.jl")
 include("bitboard/bitboard.jl")
 
+include("identity-skip.jl")
+
+include("rotate-mirror.jl")
+
 # include("attempts2020/5_policy_gradient.jl")
 end # module
