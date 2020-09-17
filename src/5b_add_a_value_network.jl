@@ -13,8 +13,8 @@ using Base.Threads: @threads
 # see benchmarks/gpu_slower_than_cpu.jl
 # using CUDA
 
-const γ = 0.999 # the reward discount rate
-const α = 0.000001 # learning rate
+const γ = 0.995 # the reward discount rate
+const α = 0.00001 # learning rate
 
 function play_game_with_policy(policy; verbose=false, epsilon=0, greedy=false, min_remarkable=0.3)
     board = initboard()
@@ -241,7 +241,7 @@ end
 #   7 => 4817
 #   8 => 832
 #   9 => 3
-display(showmaxtile(policy; n=100))
+# display(showmaxtile(policy; n=100))
 
 if false
     i= 1
@@ -263,7 +263,6 @@ using Plots
 function ok(;min_remarkable=0.3, nper=10, epsilon=1, epsilon_decay = 0.995, epsilon_min = 0.1)
     global true_rewards_over_time, valuenn_rewards_overtime
     batch=1
-
 
     while true
         println("batch $batch epsilon $epsilon")
@@ -311,7 +310,7 @@ end
 
 true_rewards_over_time = Float64[]
 valuenn_rewards_overtime = Float64[]
-ok(;min_remarkable = 0.80, nper=100, epsilon=1, epsilon_decay = 0.995, epsilon_min = 0.1)
+ok(;min_remarkable = 0.80, nper=100, epsilon=1, epsilon_decay = 0.999, epsilon_min = 0.1)
 # plot(true_rewards_over_time)
 # plot!(valuenn_rewards_overtime)
 

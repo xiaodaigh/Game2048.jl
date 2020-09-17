@@ -1,3 +1,6 @@
+# the code in here is intend to help make lookups
+
+
 function rowvec2uint16(col::Vector{Int})
     row = zero(UInt16)
     row |= UInt8(col[1])
@@ -9,16 +12,26 @@ function rowvec2uint16(col::Vector{Int})
 end
 
 function make_row_lookup()
-    lookup = Vector{UInt16}(undef, 2^16)
+    left_lookup = Vector{UInt16}(undef, 2^16)
+    left_reward_lookup = Vector{Int32}(undef, 2^16)
+    right_lookup = Vector{UInt16}(undef, 2^16)
+    right_reward_lookup = Vector{Int32}(undef, 2^16)
+
     vecs = vec([[v...] for v in Iterators.product(0:15, 0:15, 0:15, 0:15)])
-    lookup_arr = deepcopy(vecs)
-    move_up!.(lookup_arr)
+    left_lookup_arr = deepcopy(vecs)
+    right_lookup_arr = deepcopy(vecs)
 
-    idx = rowvec2uint16.(vecs)
-    vals = rowvec2uint16.(lookup_arr)
+    for (i, v) in enumerate(vecs)
+        idx = rowvec2uint16(v)
+        _, reward, _ = move_up!(left_lookup_arr[i])
+        left_reward_lookup[idx+1] = reward
+        left_lookup[idx+1] = rowvec2uint16(left_lookup_arr[i])
 
-    for (i, v) in zip(idx, vals)
-        lookup[i+1] = v
+        rla = right_lookup_arr[i]
+        _, reward, _ = move_up!(@view rla[4:-1:1])
+        right_reward_lookup[idx+1] = reward
+        right_lookup[idx+1] = rowvec2uint16(right_lookup_arr[i])
     end
-    lookup
+
+    left_lookup, left_reward_lookup, right_lookup, right_reward_lookup
 end

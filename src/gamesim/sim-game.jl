@@ -2,7 +2,7 @@ export initboard, gen_new_tile!, sim_one_move!, simulate_game, simulate_games, D
 
 using Base.Threads
 
-const DIRS = [left, right, up, down]
+const DIRS = (left, right, up, down)
 
 """intiialise the game board"""
 function initboard(random2=true)
@@ -23,7 +23,7 @@ end
 
 # it moves but doesn't generate new tile
 function sim_one_move!(board)
-    dirs = [d for d in DIRS]
+    dirs = collect(DIRS)
     size = 4
     pts = 0
 
@@ -39,14 +39,18 @@ function sim_one_move!(board)
 end
 
 function simulate_game(board = initboard(), score::Int = 0, delta=1)
+    hehe = []
     pts, update_possible =  sim_one_move!(board)
     rounds = 0
+
     while update_possible
         score += pts*delta^rounds
         gen_new_tile!(board)
         pts, update_possible =  sim_one_move!(board)
+
         rounds += 1
     end
+
     board, score, rounds
 end
 

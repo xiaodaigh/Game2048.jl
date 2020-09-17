@@ -43,3 +43,10 @@ function rotate_mirror(board, dir)
         rotate_board_dir(board |> transpose |> collect, dir_mirror[dir])
     )
 end
+
+function rotate_mirror(board)
+    tboard = transpose(board) |> collect
+
+    return board,  rotl90(board),  rot180(board),  rotr90(board),
+           tboard, rotl90(tboard), rot180(tboard), rotr90(tboard)
+end
