@@ -3,6 +3,9 @@ export simulate_bb
 using Game2048
 using Game2048:move_updown, Bitboard
 
+"""
+Makes a random move. It does not add a new tile
+"""
 function randmove(bitboard::Bitboard)::Bitboard
     dirs = collect(DIRS)
 

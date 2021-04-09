@@ -20,29 +20,3 @@ value = Chain(
 )
 
 board = initbboard()
-dict = Dict{Array{Int8, 2}, Bool}()
-queue = Queue{Bitboard}()
-@time terminal = play_ahead(board, dict, queue); length(queue), length(terminal)
-
-dict = Dict{Array{Int8, 2}, Bool}()
-board = last(queue)
-queue = Queue{Bitboard}()
-@time terminal = play_ahead(board, dict, queue); length(queue), length(terminal)
-
-
-
-
-
-dict = Dict{Array{Int8, 2}, Bool}()
-board=last(queue)
-queue = Queue{Bitboard}()
-@time play_ahead(board, dict, queue); length(queue), length(terminal)
-
-dict = Dict{Array{Int8, 2}, Bool}()
-board=last(queue)
-queue = Queue{Bitboard}()
-@time play_ahead(board, dict, queue); length(queue), length(terminal)
-
-
-
-
