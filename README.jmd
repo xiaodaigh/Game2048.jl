@@ -20,6 +20,3 @@ if new_board != board
     new_board = add_tile(new_board)
 end
 ````
-
-
-
