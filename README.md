@@ -20,7 +20,4 @@ if valid_move
     # this will add a new tile on the board
     gen_new_tile!(board)
 end
-````
-
-
-
+```

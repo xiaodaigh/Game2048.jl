@@ -1,5 +1,4 @@
-# the code in here is intend to help make lookups
-
+# the code in here is intend to help make the move lookups table
 
 function rowvec2uint16(col::Vector{Int})
     row = zero(UInt16)
@@ -11,6 +10,7 @@ function rowvec2uint16(col::Vector{Int})
     row
 end
 
+# u
 function make_row_lookup()
     left_lookup = Vector{UInt16}(undef, 2^16)
     left_reward_lookup = Vector{Int32}(undef, 2^16)

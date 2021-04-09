@@ -94,8 +94,6 @@ function move(bitboard::Bitboard, dir::Dirs)::Bitboard
     new_bitboard
 end
 
-"""this function should randomly add a one or a 2"""
-
 function count0(bitboard::Bitboard)
     board = bitboard.board
     # firstly count how many empty spots there are
@@ -108,6 +106,7 @@ function count0(bitboard::Bitboard)
     cnt_empty
 end
 
+"""this function should randomly add a one or a 2"""
 function add_tile(bitboard::Bitboard)::Bitboard
     cnt_empty = count0(bitboard)
     if cnt_empty == 0
