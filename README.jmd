@@ -1,22 +1,13 @@
 # Game2048.jl
 
-Simulation of the game 2048 in Julia and trying to do some RL
+Simple games of 2048
 
-## The environment
+## To play
 
-I did not use any RL environment framework. But here's how you can play with it.
+```
+using Game2048
 
-````julia
-using Game2048: initbboard, add_tile, left, right, up, down
+gui_game() # play a game using a GUI
 
-# obtain a new board with 2 tiles populated
-board = initbboard()
-
-# you can move left right up or down
-new_board = move(board, left)
-
-if new_board != board
-    # this will add a new tile on the board
-    new_board = add_tile(new_board)
-end
-````
+cli_game() # play a game in the command line
+```
