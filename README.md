@@ -9,5 +9,5 @@ using Game2048
 
 gui_game() # play a game using a GUI
 
-cli_game() # play a game in the command line
+cli_game() # play a game in the command line; q to quit; jikl for movement
 ```
