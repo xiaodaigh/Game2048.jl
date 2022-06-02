@@ -10,7 +10,7 @@ using Game2048Core: bitboard_to_array
 # using Test
 import Random
 import StatsBase
-using Crayons
+using Terming
 using Term
 
 
@@ -42,8 +42,6 @@ end
 
 
 function print_board(board)
-
-    board = bitboard_to_array(board)
     n = size(board, 1)
 
     rows = Array{Any, 1}(undef, n)
@@ -66,19 +64,13 @@ function print_board(board)
         )
     print(p)
 end
-# print_board(bitboard::Bitboard) = print_board(bitboard_to_array(bitboard))
+print_board(bitboard::Bitboard) = print_board(bitboard_to_array(bitboard))
 
-
-print_score(bitboard::Bitboard) = print_score(bitboard_to_array(bitboard))
-
-# see https://stackoverflow.com/questions/56888266/how-to-read-keyboard-inputs-at-every-keystroke-in-julia
-function getc1()
-    ret = ccall(:jl_tty_set_mode, Int32, (Ptr{Cvoid}, Int32), stdin.handle, true)
-    ret == 0 || error("unable to switch to raw mode")
-    c = read(stdin, Char)
-    ccall(:jl_tty_set_mode, Int32, (Ptr{Cvoid}, Int32), stdin.handle, false)
-    c
+function print_help()
+    tb = TextBox("Control: WASD or IJKL, Quit: 'ESC'")
+    println(tb)
 end
+
 
 function tui_game()
     board = Bitboard(UInt(0)) |> add_tile
@@ -94,38 +86,54 @@ function tui_game()
         'j' => left
     )
 
-    while true
-        if all(bitboard_to_array(board) .!= 0)
-            println("You lost!")
+    # clear all output
+    # println("\33[2J")
+    board = add_tile(board)
+
+    # set term size and clear
+    Terming.displaysize(20, 75); 
+    Terming.alt_screen(true)
+    print_help()
+    print_board(board)
+
+    # enable raw mode
+    Terming.raw!(true)
+    event = nothing
+
+    playing = true
+    while playing
+        if event == Terming.KeyPressedEvent(Terming.ESC)
+            playing = false 
             break
-            # elseif maximum(skipmissing(board)) == 11
-            #     println("YOU WON!")
-            #     break
         end
-
-        # clear all output
-        # println("\33[2J")
-        board = add_tile(board)
-        print_board(board)
-
-        # wait for correct input
-        while true
-            user_input = getc1()
-            if user_input == 'q'
-                return
-            end
-            if user_input ∉ keys(input_mapping)
-                continue
-            end
-            direction = input_mapping[user_input]
-            new_board = move(board, direction)
-            if new_board != board
-                board = new_board
-                break
+        if all(bitboard_to_array(board) .!= 0)
+            println("You have no move left!")
+            println("Press ESC to end the game")
+            playing = false
+        end
+    
+        # read in_stream
+        sequence = Terming.read_stream()
+        # parse in_stream sequence to event
+        event = Terming.parse_sequence(sequence)
+        if isa(event, Terming.KeyPressedEvent)
+            if haskey(input_mapping, event.key)
+                direction = input_mapping[event.key]
+                new_board = move(board, direction)
+                if new_board != board
+                    board = new_board
+                    Terming.clear()
+                    board = add_tile(board)
+                    print_help()
+                    print_board(board)
+                end
             end
         end
     end
+    # Clear terminal UI
+    Terming.alt_screen(false)
+    Terming.clear()
+    Terming.raw!(false)
 
     println("Final score: $(sum(2 .^ bitboard_to_array(board)))")
-
 end
