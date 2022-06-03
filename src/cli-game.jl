@@ -10,37 +10,25 @@ using Game2048Core: bitboard_to_array
 # using Test
 import Random
 import StatsBase
-using Crayons
-
-function centered_format(s, size, fill)
-
-    l = length(s)
-    right_chars = div(size - l, 2)
-    left_chars = size - l - right_chars
-
-    return "$(fill^left_chars)$s$(fill^right_chars)"
-end
+using Terming
+using Term
 
 
-function print_box_part(value, part::Symbol)
-
-    @assert part ∈ (:top, :middle, :bottom)
-
-    # colours taken from DuckDuckGo's game
-    colours = Dict(
-        0 => Crayon(bold = true, foreground = :white, background = :white),
-        1 => Crayon(bold = true, foreground = :white, background = (124, 181, 226)),
-        2 => Crayon(bold = true, foreground = :white, background = (68, 149, 212)),
-        3 => Crayon(bold = true, foreground = :white, background = (47, 104, 149)),
-        4 => Crayon(bold = true, foreground = :white, background = (245, 189, 112)),
-        5 => Crayon(bold = true, foreground = :white, background = (242, 160, 50)),
-        6 => Crayon(bold = true, foreground = :white, background = (205, 136, 41)),
-        7 => Crayon(bold = true, foreground = :white, background = (227, 112, 81)),
-        8 => Crayon(bold = true, foreground = :white, background = (227, 82, 123)),
-        9 => Crayon(bold = true, foreground = :white, background = (113, 82, 227)),
-        10 => Crayon(bold = true, foreground = :white, background = (82, 123, 227)),
-        11 => Crayon(bold = true, foreground = :white, background = (227, 82, 195)),
-    )
+function board_cell(value)
+    colors = [Term.color.RGBColor(255, 255, 255),
+                Term.color.RGBColor(124, 181, 226),
+                Term.color.RGBColor(68, 149, 212),
+                Term.color.RGBColor(47, 104, 149),
+                Term.color.RGBColor(245, 189, 112),
+                Term.color.RGBColor(242, 160, 50),
+                Term.color.RGBColor(205, 136, 41),
+                Term.color.RGBColor(227, 112, 81),
+                Term.color.RGBColor(227, 82, 123),
+                Term.color.RGBColor(113, 82, 227),
+                Term.color.RGBColor(82, 123, 227),
+                Term.color.RGBColor(227, 82, 195)]
+    box = [:ROUNDED, :SQUARE, :HEAVY, :HEAVY, :DOUBLE, :SQUARE, :HEAVY, :SQUARE, :HEAVY, :SQUARE, :HEAVY, :DOUBLE ]
+    linecolor = ["white", "cyan", "cyan", "blue", "blue", "yellow", "yellow", "red", "red", "green", "green", "magenta"]
 
     if ismissing(value)
         x = ""
@@ -48,54 +36,46 @@ function print_box_part(value, part::Symbol)
         x = "$(2 ^ value)"
     end
 
-    parts = Dict(
-        :top => centered_format("-", 12, '-'),
-        :middle => "|$(centered_format(x, 10, ' '))|",
-        :bottom => centered_format("-", 12, '-')
-    )
-
-    print(colours[value], parts[part])
+    color = Term.color.ANSICode(colors[value+1])
+    cell = Panel("$(color.open)$(x)$(color.close)", 
+                  justify=:center, width=10, height=3, 
+                  box=box[value+1], style=linecolor[value+1])
+    return cell
 end
 
 
 function print_board(board)
     n = size(board, 1)
-    for row_idx in 1:n
-        for part in (:top, :middle, :bottom)
-            for col_idx in 1:n
-                value = board[row_idx, col_idx]
-                print_box_part(value, part)
-                print(Crayon(reset = true), " ")
-            end
-            println()
-        end
-        println()
-    end
-end
 
+    rows = Array{Any, 1}(undef, n)
+    for row_idx in 1:n
+        r = Array{Any, 1}(undef, n)
+        for col_idx in 1:n
+            r[col_idx] = board_cell(board[row_idx, col_idx])
+        end
+        rows[row_idx] = *(r...)
+    end
+    score = sum(2 .^ skipmissing(board))
+
+    p = Panel(
+        rows...,
+            title="2048_TUI",
+            fit=true,
+            title_justify=:center,
+            title_style="default",
+            box = :HORIZONTALS,
+            subtitle="Score: $score",
+            subtitle_justify=:right
+        )
+    print(p)
+end
 print_board(bitboard::Bitboard) = print_board(bitboard_to_array(bitboard))
 
-
-function print_score(board)
-    score = sum(2 .^ skipmissing(board))
-    n = size(board, 1)
-
-    width = (14 * n) - length("Score: ")
-
-    score_text = centered_format("Score: $score", width, ' ')
-    println("\n$score_text\n")
+function print_help()
+    tb = TextBox("Control: WASD or IJKL, Quit: 'ESC'")
+    println(tb)
 end
 
-print_score(bitboard::Bitboard) = print_score(bitboard_to_array(bitboard))
-
-# see https://stackoverflow.com/questions/56888266/how-to-read-keyboard-inputs-at-every-keystroke-in-julia
-function getc1()
-    ret = ccall(:jl_tty_set_mode, Int32, (Ptr{Cvoid}, Int32), stdin.handle, true)
-    ret == 0 || error("unable to switch to raw mode")
-    c = read(stdin, Char)
-    ccall(:jl_tty_set_mode, Int32, (Ptr{Cvoid}, Int32), stdin.handle, false)
-    c
-end
 
 function cli_game()
     board = Bitboard(UInt(0)) |> add_tile
@@ -111,69 +91,55 @@ function cli_game()
         'j' => left
     )
 
-    while true
-        if all(bitboard_to_array(board) .!= 0)
-            println("You lost!")
+    # clear all output
+    # println("\33[2J")
+    board = add_tile(board)
+
+    # set term size and clear
+    Terming.displaysize(20, 75); 
+    Terming.alt_screen(true)
+    print_help()
+    print_board(board)
+
+    # enable raw mode
+    Terming.raw!(true)
+    event = nothing
+
+    playing = true
+    while playing
+        if event == Terming.KeyPressedEvent(Terming.ESC)
+            playing = false 
             break
-            # elseif maximum(skipmissing(board)) == 11
-            #     println("YOU WON!")
-            #     break
         end
-
-        # clear all output
-        println("\33[2J")
-        board = add_tile(board)
-        print_score(board)
-        print_board(board)
-
-        # wait for correct input
-        while true
-            user_input = getc1()
-            if user_input == 'q'
-                return
-            end
-            if user_input ∉ keys(input_mapping)
-                continue
-            end
-            direction = input_mapping[user_input]
-            new_board = move(board, direction)
-            if new_board != board
-                board = new_board
-                break
+        if all(bitboard_to_array(board) .!= 0)
+            println("You have no move left!")
+            println("Press ESC to end the game")
+            playing = false
+        end
+    
+        # read in_stream
+        sequence = Terming.read_stream()
+        # parse in_stream sequence to event
+        event = Terming.parse_sequence(sequence)
+        if isa(event, Terming.KeyPressedEvent)
+            if haskey(input_mapping, event.key)
+                direction = input_mapping[event.key]
+                new_board = move(board, direction)
+                if new_board != board
+                    board = new_board
+                    Terming.clear()
+                    board = add_tile(board)
+                    print_help()
+                    print_board(board)
+                end
             end
         end
     end
+    # Clear terminal UI
+    Terming.alt_screen(false)
+    Terming.clear()
+    Terming.raw!(false)
 
-    println("Final score: $(sum(2 .^ bitboard_to_array(board)))")
-
+    p = Panel("Well Done!\nScore: [green]$(sum(2 .^ bitboard_to_array(board)))", width = 18, justify=:center)
+    print(p)
 end
-
-# game(3)
-
-# function getc1()
-#     ret = ccall(:jl_tty_set_mode, Int32, (Ptr{Cvoid}, Int32), stdin.handle, true)
-#     ret == 0 || error("unable to switch to raw mode")
-#     c = read(stdin, Char)
-#     ccall(:jl_tty_set_mode, Int32, (Ptr{Cvoid}, Int32), stdin.handle, false)
-#     c
-# end
-
-# function getc2()
-#     # t = REPL.TerminalMenus.terminal
-#     # REPL.TerminalMenus.enableRawMode(t) || error("unable to switch to raw mode")
-#     c = Char(REPL.TerminalMenus.readKey(t.in_stream))h
-#     # REPL.TerminalMenus.disableRawMode(t)
-#     c
-# end
-
-# function quit()
-#     print("Press q to quit!")
-#     while true
-#         opt = getc2()
-#         if opt == 'q'
-#             break
-#         else
-#             continue
-#         end
-#     end
-# end
