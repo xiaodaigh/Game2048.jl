@@ -30,15 +30,15 @@ function board_cell(value)
     box = [:ROUNDED, :SQUARE, :HEAVY, :HEAVY, :DOUBLE, :SQUARE, :HEAVY, :SQUARE, :HEAVY, :SQUARE, :HEAVY, :DOUBLE ]
     linecolor = ["white", "cyan", "cyan", "blue", "blue", "yellow", "yellow", "red", "red", "green", "green", "magenta"]
 
-    if ismissing(value)
-        x = ""
+    if (value == 0) || ismissing(value)
+        x = " "
     else
         x = "$(2 ^ value)"
     end
 
     color = Term.color.ANSICode(colors[value+1])
-    cell = Panel("$(color.open)$(x)$(color.close)", 
-                  justify=:center, width=10, height=3, 
+    cell = Panel("$(color.open)$(x)$(color.close)",
+                  justify=:center, width=10, height=3,
                   box=box[value+1], style=linecolor[value+1])
     return cell
 end
@@ -96,7 +96,7 @@ function cli_game()
     board = add_tile(board)
 
     # set term size and clear
-    Terming.displaysize(20, 75); 
+    Terming.displaysize(20, 75);
     Terming.alt_screen(true)
     print_help()
     print_board(board)
@@ -108,7 +108,7 @@ function cli_game()
     playing = true
     while playing
         if event == Terming.KeyPressedEvent(Terming.ESC)
-            playing = false 
+            playing = false
             break
         end
         if all(bitboard_to_array(board) .!= 0)
@@ -116,7 +116,7 @@ function cli_game()
             println("Press ESC to end the game")
             playing = false
         end
-    
+
         # read in_stream
         sequence = Terming.read_stream()
         # parse in_stream sequence to event
